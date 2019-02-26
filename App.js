@@ -1,5 +1,11 @@
 import React, { Component } from "react";
-import { StyleSheet, View, Text, FlatList } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  FlatList,
+  DatePickerAndroid
+} from "react-native";
 import { AppLoading, Asset } from "expo";
 import {
   Provider as PaperProvider,
@@ -14,9 +20,13 @@ export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      chosenDate: new Date(),
+      // dayS: null,
+      // monthS: null,
       eventsResponse: [],
       isLoadingComplete: false
     };
+    this._onClickChangeDate = this._onClickChangeDate.bind(this);
   }
 
   componentDidMount() {
@@ -24,17 +34,36 @@ export default class App extends Component {
   }
 
   fetchDataFromServer = () => {
-    getTodayInHistory()
+    getTodayInHistory(
+      this._extractMonthfromDate(this.state.chosenDate),
+      this._extractDayfromDate(this.state.chosenDate)
+    )
       .then(json => json.Events)
       .then(events => {
         this.setState({ eventsResponse: events });
-        console.log("setstate" + events);
       })
       .catch(error => {
         console.warn(error);
         this.setState({ eventsResponse: [] });
       });
   };
+
+  async _onClickChangeDate() {
+    try {
+      var { action, year, month, day } = await DatePickerAndroid.open({
+        // Use `new Date()` for current date.
+        // May 25 2020. Month 0 is January.
+        date: this.state.chosenDate
+      });
+      if (action !== DatePickerAndroid.dismissedAction) {
+        // Selected year, month (0-11), day
+        this.setState({ chosenDate: new Date(year, month, day) });
+        this.fetchDataFromServer();
+      }
+    } catch ({ code, message }) {
+      console.warn("Cannot open date picker", message);
+    }
+  }
 
   render() {
     if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen) {
@@ -50,9 +79,14 @@ export default class App extends Component {
         <PaperProvider>
           <View style={styles.container}>
             <Appbar.Header theme={theme}>
-              <Appbar.Content title="Today in history" subtitle="Subtitle" />
-              {/* <Appbar.Action icon="search" onPress={this._onSearch} />
-            <Appbar.Action icon="more-vert" onPress={this._onMore} /> */}
+              <Appbar.Content
+                title="Today In History"
+                subtitle={this.state.chosenDate.toLocaleDateString()}
+              />
+              <Appbar.Action
+                icon={require("./assets/images/calendar_today_black.png")}
+                onPress={this._onClickChangeDate}
+              />
             </Appbar.Header>
             <FlatList
               style={styles.flatlist}
@@ -66,6 +100,13 @@ export default class App extends Component {
       );
     }
   }
+
+  _extractMonthfromDate = date => {
+    return date.getMonth();
+  };
+  _extractDayfromDate = date => {
+    return date.getDay() + 1;
+  };
 
   _loadResourcesAsync = async () => {
     return Promise.all([
@@ -91,7 +132,7 @@ class FlatListItem extends Component {
   render() {
     return (
       <View padding={8} style={{ flex: 1 }}>
-        <Card elevation={4}>
+        <Card elevation={2}>
           <Card.Content>
             <Title>Year {this.props.item.year}</Title>
             <Paragraph>{this.props.item.text}</Paragraph>
