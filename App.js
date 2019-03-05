@@ -58,8 +58,15 @@ export default class App extends Component {
       });
       if (action !== DatePickerAndroid.dismissedAction) {
         // Selected year, month (0-11), day
-        this.setState({ chosenDate: new Date(year, month, day) });
-        this.fetchDataFromServer();
+        if (
+          this.state.chosenDate.getMonth() == month &&
+          this.state.chosenDate.getDate() == day
+        ) {
+          return;
+        } else {
+          this.setState({ chosenDate: new Date(year, month, day) });
+          this.fetchDataFromServer();
+        }
       }
     } catch ({ code, message }) {
       console.warn("Cannot open date picker", message);
@@ -122,10 +129,10 @@ export default class App extends Component {
   }
 
   _extractMonthfromDate = date => {
-    return date.getMonth();
+    return date.getMonth() + 1;
   };
   _extractDayfromDate = date => {
-    return date.getDay() + 1;
+    return date.getDate();
   };
 
   _loadResourcesAsync = async () => {
