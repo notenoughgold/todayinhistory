@@ -4,7 +4,8 @@ import {
   View,
   Text,
   FlatList,
-  DatePickerAndroid
+  DatePickerAndroid,
+  ActivityIndicator
 } from "react-native";
 import { AppLoading, Asset } from "expo";
 import {
@@ -21,12 +22,10 @@ export default class App extends Component {
     super(props);
     this.state = {
       chosenDate: new Date(),
-      // dayS: null,
-      // monthS: null,
       eventsResponse: [],
-      isLoadingComplete: false
+      isLoadingComplete: false,
+      isFetchComplete: false
     };
-    this._onClickChangeDate = this._onClickChangeDate.bind(this);
   }
 
   componentDidMount() {
@@ -34,13 +33,15 @@ export default class App extends Component {
   }
 
   fetchDataFromServer = () => {
+    this.setState({ isFetchComplete: false, eventsResponse: [] });
+
     getTodayInHistory(
       this._extractMonthfromDate(this.state.chosenDate),
       this._extractDayfromDate(this.state.chosenDate)
     )
       .then(json => json.Events)
       .then(events => {
-        this.setState({ eventsResponse: events });
+        this.setState({ eventsResponse: events, isFetchComplete: true });
       })
       .catch(error => {
         console.warn(error);
@@ -48,7 +49,7 @@ export default class App extends Component {
       });
   };
 
-  async _onClickChangeDate() {
+  _onClickChangeDate = async () => {
     try {
       var { action, year, month, day } = await DatePickerAndroid.open({
         // Use `new Date()` for current date.
@@ -63,7 +64,7 @@ export default class App extends Component {
     } catch ({ code, message }) {
       console.warn("Cannot open date picker", message);
     }
-  }
+  };
 
   render() {
     if (!this.state.isLoadingComplete && !this.props.skipLoadingScreen) {
@@ -88,13 +89,32 @@ export default class App extends Component {
                 onPress={this._onClickChangeDate}
               />
             </Appbar.Header>
-            <FlatList
-              style={styles.flatlist}
-              data={this.state.eventsResponse}
-              renderItem={({ item, index }) => {
-                return <FlatListItem item={item} index={index} />;
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center"
               }}
-            />
+            >
+              <View style>
+                <FlatList
+                  style={styles.flatlist}
+                  data={this.state.eventsResponse}
+                  keyExtractor={(item, index) => item.year}
+                  renderItem={({ item, index }) => {
+                    return <FlatListItem item={item} index={index} />;
+                  }}
+                />
+              </View>
+
+              <ActivityIndicator
+                animating={!this.state.isFetchComplete}
+                size="large"
+                style={{
+                  position: "absolute"
+                }}
+              />
+            </View>
           </View>
         </PaperProvider>
       );
@@ -145,6 +165,9 @@ class FlatListItem extends Component {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1
+  },
+  appwindow: {
     flex: 1
   },
   flatlist: {
