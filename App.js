@@ -91,10 +91,7 @@ export default class App extends Component {
                 title="Today In History"
                 subtitle={this.state.chosenDate.toLocaleDateString()}
               />
-              <Appbar.Action
-                icon={require("./assets/images/calendar_today_black.png")}
-                onPress={this._onClickChangeDate}
-              />
+              <Appbar.Action icon="today" onPress={this._onClickChangeDate} />
             </Appbar.Header>
             <View
               style={{
@@ -107,7 +104,7 @@ export default class App extends Component {
                 <FlatList
                   style={styles.flatlist}
                   data={this.state.eventsResponse}
-                  keyExtractor={(item, index) => item.year}
+                  keyExtractor={(item, index) => index + ""}
                   renderItem={({ item, index }) => {
                     return <FlatListItem item={item} index={index} />;
                   }}
