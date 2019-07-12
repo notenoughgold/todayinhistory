@@ -25,6 +25,8 @@ export default class App extends Component {
     this.state = {
       chosenDate: new Date(),
       eventsResponse: [],
+      deathsResponse: [],
+      birthsResponse: [],
       isLoadingComplete: false,
       isFetchComplete: false,
       index: 1,
@@ -40,19 +42,28 @@ export default class App extends Component {
   }
 
   fetchDataFromServer = () => {
-    this.setState({ isFetchComplete: false, eventsResponse: [] });
+    this.setState({ isFetchComplete: false, apiResponse: null });
 
     getTodayInHistory(
       this._extractMonthfromDate(this.state.chosenDate),
       this._extractDayfromDate(this.state.chosenDate)
     )
-      .then(json => json.Events)
-      .then(events => {
-        this.setState({ eventsResponse: events, isFetchComplete: true });
+      .then(response => {
+        this.setState({
+          eventsResponse: response.Events,
+          birthsResponse: response.Births,
+          deathsResponse: response.Deaths,
+          isFetchComplete: true
+        });
       })
       .catch(error => {
         console.warn(error);
-        this.setState({ eventsResponse: [] });
+        this.setState({
+          eventsResponse: [],
+          birthsResponse: [],
+          deathsResponse: [],
+          isFetchComplete: true
+        });
       });
   };
 
@@ -100,7 +111,11 @@ export default class App extends Component {
               />
               <Appbar.Action icon="today" onPress={this._onClickChangeDate} />
             </Appbar.Header>
-            <MyTabView response={this.state.eventsResponse} />
+            <MyTabView
+              eList={this.state.eventsResponse}
+              bList={this.state.birthsResponse}
+              dList={this.state.deathsResponse}
+            />
             <ActivityIndicator
               animating={!this.state.isFetchComplete}
               size="large"
@@ -161,11 +176,11 @@ class MyTabView extends Component {
   renderScene = ({ route }) => {
     switch (route.key) {
       case "events":
-        return <EventsTab response={this.props.response} />;
+        return <EventsTab response={this.props.eList} />;
       case "births":
-        return <EventsTab response={this.props.response} />;
+        return <EventsTab response={this.props.bList} />;
       case "deaths":
-        return <EventsTab response={this.props.response} />;
+        return <EventsTab response={this.props.dList} />;
       default:
         return null;
     }
