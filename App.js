@@ -5,8 +5,10 @@ import {
   Text,
   FlatList,
   DatePickerAndroid,
-  ActivityIndicator
+  ActivityIndicator,
+  Dimensions
 } from "react-native";
+import { TabView, TabBar } from "react-native-tab-view";
 import { AppLoading, Asset } from "expo";
 import {
   Provider as PaperProvider,
@@ -24,7 +26,12 @@ export default class App extends Component {
       chosenDate: new Date(),
       eventsResponse: [],
       isLoadingComplete: false,
-      isFetchComplete: false
+      isFetchComplete: false,
+      index: 1,
+      routes: [
+        { key: "events", title: "Events" },
+        { key: "births", title: "Briths" }
+      ]
     };
   }
 
@@ -93,32 +100,16 @@ export default class App extends Component {
               />
               <Appbar.Action icon="today" onPress={this._onClickChangeDate} />
             </Appbar.Header>
-            <View
+            <MyTabView response={this.state.eventsResponse} />
+            <ActivityIndicator
+              animating={!this.state.isFetchComplete}
+              size="large"
               style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center"
+                position: "absolute",
+                top: Dimensions.get("window").height / 2 - 18,
+                left: Dimensions.get("window").width / 2 - 18
               }}
-            >
-              <View style>
-                <FlatList
-                  style={styles.flatlist}
-                  data={this.state.eventsResponse}
-                  keyExtractor={(item, index) => index + ""}
-                  renderItem={({ item, index }) => {
-                    return <FlatListItem item={item} index={index} />;
-                  }}
-                />
-              </View>
-
-              <ActivityIndicator
-                animating={!this.state.isFetchComplete}
-                size="large"
-                style={{
-                  position: "absolute"
-                }}
-              />
-            </View>
+            />
           </View>
         </PaperProvider>
       );
@@ -151,6 +142,70 @@ export default class App extends Component {
     this.setState({ isLoadingComplete: true });
   };
 }
+class MyTabView extends Component {
+  state = {
+    index: 0,
+    routes: [
+      { key: "events", title: "Events" },
+      { key: "births", title: "Births" },
+      { key: "deaths", title: "Deaths" }
+    ]
+  };
+  renderTabBar = props => (
+    <TabBar
+      {...props}
+      indicatorStyle={{ backgroundColor: theme.colors.accent }}
+      style={{ backgroundColor: theme.colors.primary }}
+    />
+  );
+  renderScene = ({ route }) => {
+    switch (route.key) {
+      case "events":
+        return <EventsTab response={this.props.response} />;
+      case "births":
+        return <EventsTab response={this.props.response} />;
+      case "deaths":
+        return <EventsTab response={this.props.response} />;
+      default:
+        return null;
+    }
+  };
+  render() {
+    return (
+      <TabView
+        renderTabBar={this.renderTabBar}
+        navigationState={this.state}
+        renderScene={this.renderScene}
+        onIndexChange={index => this.setState({ index })}
+        initialLayout={{ width: Dimensions.get("window").width }}
+      />
+    );
+  }
+}
+class EventsTab extends Component {
+  render() {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center"
+        }}
+      >
+        <View style>
+          <FlatList
+            style={styles.flatlist}
+            data={this.props.response}
+            keyExtractor={(item, index) => index + ""}
+            renderItem={({ item, index }) => {
+              return <FlatListItem item={item} index={index} />;
+            }}
+          />
+        </View>
+      </View>
+    );
+  }
+}
 
 class FlatListItem extends Component {
   render() {
@@ -171,9 +226,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1
   },
-  appwindow: {
-    flex: 1
-  },
+
   flatlist: {
     flex: 1
   }
