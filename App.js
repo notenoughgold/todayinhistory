@@ -9,7 +9,8 @@ import {
   Dimensions
 } from "react-native";
 import { TabView, TabBar } from "react-native-tab-view";
-import { AppLoading, Asset } from "expo";
+import { AppLoading } from "expo";
+import { Asset } from "expo-asset";
 import {
   Provider as PaperProvider,
   Appbar,
